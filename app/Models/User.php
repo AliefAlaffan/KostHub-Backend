@@ -2,48 +2,48 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasRoles, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'email', 'phone', 'password', 'role', 'avatar', 'status', 'created_by',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function propertiesOwned()
+    {
+        return $this->hasMany(Property::class, 'admin_id');
+    }
+
+    public function assignedProperties()
+    {
+        return $this->belongsToMany(Property::class, 'property_staff', 'user_id', 'property_id')
+            ->withPivot('assigned_at');
+    }
+
+    public function isAdmin(): bool { return $this->role === 'admin'; }
+    public function isStaff(): bool { return $this->role === 'staff'; }
+    public function isTenant(): bool { return $this->role === 'tenant'; }
+
+    public function accessiblePropertyIds(): array
+    {
+        if ($this->isAdmin()) return $this->propertiesOwned()->pluck('id')->toArray();
+        if ($this->isStaff()) return $this->assignedProperties()->pluck('properties.id')->toArray();
+        return [];
     }
 }
