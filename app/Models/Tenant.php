@@ -5,17 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Room extends Model
+class Tenant extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
-        'property_id', 'room_type_id', 'room_number', 'floor',
-        'price', 'size_m2', 'status', 'description',
+        'user_id', 'ktp_number', 'emergency_contact_name',
+        'emergency_contact_phone', 'occupation', 'join_date',
     ];
 
-    public function property() { return $this->belongsTo(Property::class); }
-    public function roomType() { return $this->belongsTo(RoomType::class); }
+    public function user() { return $this->belongsTo(User::class); }
     public function contracts() { return $this->hasMany(Contract::class); }
     public function activeContract() { return $this->hasOne(Contract::class)->where('status', 'active'); }
-}
+}   
