@@ -18,4 +18,11 @@ class Invoice extends Model
 
     public function contract() { return $this->belongsTo(Contract::class); }
     public function items() { return $this->hasMany(InvoiceItem::class); }
+    
+    public function payments() { return $this->hasMany(Payment::class); }
+
+    public function verifiedTotal(): float
+    {
+        return (float) $this->payments()->where('status', 'verified')->sum('amount');
+    }
 }

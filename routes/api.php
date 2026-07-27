@@ -3,9 +3,10 @@
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PropertyController;
-use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\PaymentController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -30,5 +31,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::post('/invoices', [InvoiceController::class, 'store']);
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+
+        Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store']);
+        Route::patch('/payments/{payment}/verify', [PaymentController::class, 'verify']);
+        Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject']);
     });
 });
