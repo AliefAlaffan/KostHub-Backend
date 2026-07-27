@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ContractController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -35,5 +36,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store']);
         Route::patch('/payments/{payment}/verify', [PaymentController::class, 'verify']);
         Route::patch('/payments/{payment}/reject', [PaymentController::class, 'reject']);
+
+        Route::get('/contracts', [ContractController::class, 'index']);
+        Route::get('/contracts/{contract}', [ContractController::class, 'show']);
+        Route::post('/contracts/{contract}/renew', [ContractController::class, 'renew']);
+        Route::post('/contracts/{contract}/checkout', [ContractController::class, 'checkout']);
     });
 });
