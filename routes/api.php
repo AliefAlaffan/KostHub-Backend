@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\MaintenanceRequestController;
+use App\Http\Controllers\Api\AnnouncementController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -47,5 +48,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/maintenance-requests', [MaintenanceRequestController::class, 'store']);
         Route::patch('/maintenance-requests/{maintenanceRequest}/status', [MaintenanceRequestController::class, 'updateStatus']);
         Route::patch('/maintenance-requests/{maintenanceRequest}/assign', [MaintenanceRequestController::class, 'assign']);
+
+        Route::get('/announcements', [AnnouncementController::class, 'index']);
+        Route::post('/announcements', [AnnouncementController::class, 'store']);
     });
 });
