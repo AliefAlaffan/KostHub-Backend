@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ContractController;
+use App\Http\Controllers\Api\MaintenanceRequestController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -41,5 +42,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/contracts/{contract}', [ContractController::class, 'show']);
         Route::post('/contracts/{contract}/renew', [ContractController::class, 'renew']);
         Route::post('/contracts/{contract}/checkout', [ContractController::class, 'checkout']);
+
+        Route::get('/maintenance-requests', [MaintenanceRequestController::class, 'index']);
+        Route::post('/maintenance-requests', [MaintenanceRequestController::class, 'store']);
+        Route::patch('/maintenance-requests/{maintenanceRequest}/status', [MaintenanceRequestController::class, 'updateStatus']);
+        Route::patch('/maintenance-requests/{maintenanceRequest}/assign', [MaintenanceRequestController::class, 'assign']);
     });
 });

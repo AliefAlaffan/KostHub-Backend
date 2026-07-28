@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Tenant;
 
 class User extends Authenticatable
 {
@@ -45,5 +46,10 @@ class User extends Authenticatable
         if ($this->isAdmin()) return $this->propertiesOwned()->pluck('id')->toArray();
         if ($this->isStaff()) return $this->assignedProperties()->pluck('properties.id')->toArray();
         return [];
+    }
+
+    public function tenant()
+    {
+        return $this->hasOne(Tenant::class);
     }
 }

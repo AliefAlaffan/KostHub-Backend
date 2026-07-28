@@ -23,4 +23,5 @@ class Property extends Model
     public function staff() { return $this->belongsToMany(User::class, 'property_staff', 'property_id', 'user_id'); }
     public function roomTypes() { return $this->hasMany(RoomType::class); }
     public function rooms() { return $this->hasMany(Room::class); }
+    public function expenses() { return $this->hasMany(Expense::class); }
 }
