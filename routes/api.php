@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\MaintenanceRequestController;
 use App\Http\Controllers\Api\AnnouncementController;
+use App\Http\Controllers\Api\ReportController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -51,5 +52,12 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/announcements', [AnnouncementController::class, 'index']);
         Route::post('/announcements', [AnnouncementController::class, 'store']);
+
+        Route::prefix('reports')->group(function () {
+            Route::get('/occupancy', [ReportController::class, 'occupancy']);
+            Route::get('/revenue', [ReportController::class, 'revenue']);
+            Route::get('/outstanding-invoices', [ReportController::class, 'outstandingInvoices']);
+            Route::get('/expenses', [ReportController::class, 'expenses']);
+        });
     });
 });
