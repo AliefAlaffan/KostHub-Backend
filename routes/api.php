@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\MaintenanceRequestController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\UserManagementController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -59,5 +60,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/outstanding-invoices', [ReportController::class, 'outstandingInvoices']);
             Route::get('/expenses', [ReportController::class, 'expenses']);
         });
+
+        Route::get('/users', [UserManagementController::class, 'index']);
+        Route::post('/users/staff', [UserManagementController::class, 'storeStaff']);
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword']);
+        Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus']);
     });
 });
