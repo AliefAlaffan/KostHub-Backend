@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\MaintenanceRequestController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserManagementController;
+use App\Http\Controllers\Api\ReviewController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -65,5 +66,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/users/staff', [UserManagementController::class, 'storeStaff']);
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword']);
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus']);
+
+        Route::get('/properties/{property}/reviews', [ReviewController::class, 'index']);
+        Route::post('/properties/{property}/reviews', [ReviewController::class, 'store']);
+        Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
     });
 });

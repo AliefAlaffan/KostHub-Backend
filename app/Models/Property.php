@@ -24,4 +24,5 @@ class Property extends Model
     public function roomTypes() { return $this->hasMany(RoomType::class); }
     public function rooms() { return $this->hasMany(Room::class); }
     public function expenses() { return $this->hasMany(Expense::class); }
+    public function reviews() { return $this->hasMany(Review::class); }     
 }
