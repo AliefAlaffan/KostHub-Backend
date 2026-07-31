@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -51,5 +52,49 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $user->update($data);
+
+        // Kalau user ini tenant, izinkan juga update data tenant-nya (kontak darurat, pekerjaan)
+        if ($user->isTenant() && $user->tenant) {
+            $tenantData = $request->validate([
+                'emergency_contact_name' => 'nullable|string|max:255',
+                'emergency_contact_phone' => 'nullable|string|max:20',
+                'occupation' => 'nullable|string|max:255',
+            ]);
+            $user->tenant->update($tenantData);
+        }
+
+        return response()->json($user->fresh('tenant'));
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($data['current_password'], $user->password)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'current_password' => ['Password saat ini salah.'],
+            ]);
+        }
+
+        $user->update(['password' => $data['new_password']]);
+
+        return response()->json(['message' => 'Password berhasil diubah.']);
     }
 }
