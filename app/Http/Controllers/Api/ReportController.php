@@ -59,4 +59,46 @@ class ReportController extends Controller
             'by_category' => $expenses->groupBy('category')->map->sum('amount'),
         ]);
     }
+
+    public function dashboardSummary(Request $request)
+    {
+        $propertyIds = $this->scopedPropertyIds($request);
+
+        $totalRooms = \App\Models\Room::whereIn('property_id', $propertyIds)->count();
+        $occupied = \App\Models\Room::whereIn('property_id', $propertyIds)->where('status', 'occupied')->count();
+        $available = \App\Models\Room::whereIn('property_id', $propertyIds)->where('status', 'available')->count();
+
+        $totalRevenue = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->where('status', 'paid')->sum('total_amount');
+
+        $monthlyRevenue = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->where('status', 'paid')
+            ->selectRaw('period, SUM(total_amount) as total')
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get();
+
+        $outstandingInvoices = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->whereIn('status', ['unpaid', 'partial', 'overdue'])
+            ->with('contract.tenant.user', 'contract.room')
+            ->get();
+
+        return response()->json([
+            'occupancy' => [
+                'total_rooms' => $totalRooms,
+                'occupied' => $occupied,
+                'available' => $available,
+                'occupancy_rate' => $totalRooms > 0 ? round($occupied / $totalRooms * 100, 1) : 0,
+            ],
+            'revenue' => [
+                'total_revenue' => $totalRevenue,
+                'monthly' => $monthlyRevenue,
+            ],
+            'outstanding' => [
+                'count' => $outstandingInvoices->count(),
+                'total_outstanding' => $outstandingInvoices->sum('total_amount'),
+                'invoices' => $outstandingInvoices,
+            ],
+        ]);
+    }
 }

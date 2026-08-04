@@ -62,6 +62,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/revenue', [ReportController::class, 'revenue']);
             Route::get('/outstanding-invoices', [ReportController::class, 'outstandingInvoices']);
             Route::get('/expenses', [ReportController::class, 'expenses']);
+            Route::get('/dashboard-summary', [ReportController::class, 'dashboardSummary']);
         });
 
         Route::get('/users', [UserManagementController::class, 'index']);
