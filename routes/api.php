@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/tenants', [TenantController::class, 'index']);
         Route::post('/tenants', [TenantController::class, 'store']);
+        Route::get('/tenants/{tenant}', [TenantController::class, 'show']);
 
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::post('/invoices', [InvoiceController::class, 'store']);

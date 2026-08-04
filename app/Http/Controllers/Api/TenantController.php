@@ -39,4 +39,9 @@ class TenantController extends Controller
             'plain_password' => $result['plain_password'],
         ], 201);
     }
+
+    public function show(Request $request, \App\Models\Tenant $tenant)
+    {
+        return response()->json($tenant->load('user', 'contracts.room'));
+    }
 }

@@ -101,4 +101,9 @@ class ReportController extends Controller
             ],
         ]);
     }
+
+    private function scopedPropertyIds(Request $request): array
+    {
+        return $request->user()->accessiblePropertyIds();
+    }
 }
