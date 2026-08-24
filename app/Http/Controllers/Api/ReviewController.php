@@ -46,4 +46,41 @@ class ReviewController extends Controller
 
         return response()->json($review);
     }
+
+        /** Tenant beri ulasan untuk properti tempat mereka tinggal saat ini (deteksi otomatis dari kontrak aktif) */
+    public function storeMine(Request $request)
+    {
+        $tenant = $request->user()->tenant;
+        abort_unless($tenant, 403, 'Hanya penghuni yang bisa memberi ulasan.');
+
+        $property = $tenant->activeContract?->room?->property;
+        abort_unless($property, 422, 'Anda tidak memiliki kamar aktif saat ini.');
+
+        $hasQualifyingContract = $tenant->contracts()
+            ->whereHas('room', fn ($q) => $q->where('property_id', $property->id))
+            ->where('start_date', '<=', now()->subMonth())
+            ->exists();
+
+        abort_unless($hasQualifyingContract, 422, 'Anda perlu menyewa minimal 1 periode sebelum bisa memberi ulasan.');
+
+        $data = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $review = $property->reviews()->create([...$data, 'tenant_id' => $tenant->id]);
+
+        return response()->json($review, 201);
+    }
+
+    /** Tenant lihat ulasan yang pernah mereka beri */
+    public function mine(Request $request)
+    {
+        $tenant = $request->user()->tenant;
+        abort_unless($tenant, 403);
+
+        return response()->json(
+            \App\Models\Review::where('tenant_id', $tenant->id)->with('property')->latest()->get()
+        );
+    }
 }

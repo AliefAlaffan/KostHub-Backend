@@ -74,5 +74,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/properties/{property}/reviews', [ReviewController::class, 'index']);
         Route::post('/properties/{property}/reviews', [ReviewController::class, 'store']);
         Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);
+        Route::get('/reviews/mine', [ReviewController::class, 'mine']);
+        Route::post('/reviews/mine', [ReviewController::class, 'storeMine']);
     });
 });
