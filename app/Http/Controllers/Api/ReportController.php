@@ -7,6 +7,11 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use App\Exports\RevenueExport;
+use App\Exports\OutstandingInvoicesExport;
+use App\Exports\ExpensesExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -105,5 +110,48 @@ class ReportController extends Controller
     private function scopedPropertyIds(Request $request): array
     {
         return $request->user()->accessiblePropertyIds();
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $type = $request->query('type', 'revenue');
+        $propertyIds = $this->scopedPropertyIds($request);
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        $export = match ($type) {
+            'outstanding' => new OutstandingInvoicesExport($propertyIds),
+            'expenses' => new ExpensesExport($propertyIds, $from, $to),
+            default => new RevenueExport($propertyIds, $from, $to),
+        };
+
+        return Excel::download($export, "laporan-{$type}-" . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $propertyIds = $this->scopedPropertyIds($request);
+
+        $occupancy = [
+            'total' => \App\Models\Room::whereIn('property_id', $propertyIds)->count(),
+            'occupied' => \App\Models\Room::whereIn('property_id', $propertyIds)->where('status', 'occupied')->count(),
+        ];
+
+        $revenue = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->where('status', 'paid')->sum('total_amount');
+
+        $outstanding = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->whereIn('status', ['unpaid', 'partial', 'overdue'])
+            ->with('contract.tenant.user', 'contract.room')
+            ->get();
+
+        $pdf = Pdf::loadView('reports.summary', [
+            'occupancy' => $occupancy,
+            'revenue' => $revenue,
+            'outstanding' => $outstanding,
+            'generatedAt' => now(),
+        ]);
+
+        return $pdf->download('laporan-ringkasan-' . now()->format('Y-m-d') . '.pdf');
     }
 }
