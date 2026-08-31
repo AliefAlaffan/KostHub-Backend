@@ -40,8 +40,36 @@ class TenantController extends Controller
         ], 201);
     }
 
-    public function show(Request $request, \App\Models\Tenant $tenant)
+    public function show(Request $request, Tenant $tenant)
+    {   
+        return response()->json($tenant->load('user', 'documents', 'contracts.room'));
+    }
+
+    public function uploadDocuments(Request $request, Tenant $tenant)
     {
-        return response()->json($tenant->load('user', 'contracts.room'));
+        $data = $request->validate([
+            'doc_type' => ['required', \Illuminate\Validation\Rule::in(['ktp', 'kk', 'other'])],
+            'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $path = $request->file('file')->store("tenants/{$tenant->id}/documents", 'public');
+
+        $document = $tenant->documents()->create([
+            'doc_type' => $data['doc_type'],
+            'file_path' => $path,
+            'verified' => false,
+        ]);
+
+        return response()->json($document, 201);
+    }
+
+    public function deleteDocument(Request $request, Tenant $tenant, \App\Models\TenantDocument $document)
+    {
+        abort_unless($document->tenant_id === $tenant->id, 404);
+
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($document->file_path);
+        $document->delete();
+
+        return response()->json(['message' => 'Dokumen dihapus.']);
     }
 }
