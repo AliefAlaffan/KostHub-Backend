@@ -11,7 +11,7 @@ class Property extends Model
 
     protected $fillable = [
         'admin_id', 'name', 'address', 'city', 'type', 'description',
-        'facilities', 'bank_account', 'status',
+        'facilities', 'bank_account', 'qris_image', 'status',
     ];
 
     protected function casts(): array

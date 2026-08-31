@@ -71,4 +71,30 @@ class PropertyController extends Controller
         $property->delete();
         return response()->json(['message' => 'Properti dihapus.']);
     }
+
+    public function uploadQris(Request $request, Property $property)
+    {
+        $request->validate([
+            'qris_image' => 'required|image|max:5120',
+        ]);
+
+        if ($property->qris_image) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($property->qris_image);
+        }
+
+        $path = $request->file('qris_image')->store("properties/{$property->id}/qris", 'public');
+        $property->update(['qris_image' => $path]);
+
+        return response()->json($property);
+    }
+
+    public function deleteQris(Request $request, Property $property)
+    {
+        if ($property->qris_image) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($property->qris_image);
+            $property->update(['qris_image' => null]);
+        }
+
+        return response()->json(['message' => 'QRIS dihapus.']);
+    }
 }

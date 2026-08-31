@@ -36,6 +36,8 @@ class InvoiceController extends Controller
 
     public function show(Request $request, Invoice $invoice)
     {
-        return response()->json($invoice->load('items', 'contract.tenant.user', 'contract.room'));
+        return response()->json(
+            $invoice->load('items', 'payments', 'contract.tenant.user', 'contract.room.property')
+        );
     }
 }

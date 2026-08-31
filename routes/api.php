@@ -28,6 +28,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/properties/{property}', [PropertyController::class, 'show']);
         Route::put('/properties/{property}', [PropertyController::class, 'update']);
         Route::delete('/properties/{property}', [PropertyController::class, 'destroy']);
+        Route::post('/properties/{property}/qris', [PropertyController::class, 'uploadQris']);
+        Route::delete('/properties/{property}/qris', [PropertyController::class, 'deleteQris']);
 
         Route::get('/rooms', [RoomController::class, 'index']);
         Route::post('/rooms', [RoomController::class, 'store']);
