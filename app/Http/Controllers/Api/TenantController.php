@@ -41,8 +41,10 @@ class TenantController extends Controller
     }
 
     public function show(Request $request, Tenant $tenant)
-    {   
-        return response()->json($tenant->load('user', 'documents', 'contracts.room'));
+    {
+        return response()->json(
+            $tenant->load('user', 'documents', 'contracts.room.property')
+        );
     }
 
     public function uploadDocuments(Request $request, Tenant $tenant)
