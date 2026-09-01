@@ -11,7 +11,30 @@ class TenantController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(Tenant::with('user', 'activeContract.room')->get());
+        $user = $request->user();
+        $query = Tenant::query()->with('user', 'activeContract.room.property');
+
+        if ($user->isStaff() || $user->isAdmin()) {
+            $propertyIds = $user->accessiblePropertyIds();
+            $query->whereHas('contracts.room', fn ($q) => $q->whereIn('property_id', $propertyIds));
+        }
+
+        if ($request->filled('property_id')) {
+            $query->whereHas(
+                'activeContract.room',
+                fn ($q) => $q->where('property_id', $request->integer('property_id'))
+            );
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->string('search');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', fn ($q2) => $q2->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('activeContract.room', fn ($q2) => $q2->where('room_number', 'like', "%{$search}%"));
+            });
+        }
+
+        return response()->json($query->get());
     }
 
     public function store(Request $request, TenantOnboardingService $service)
