@@ -31,10 +31,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/properties/{property}/qris', [PropertyController::class, 'uploadQris']);
         Route::delete('/properties/{property}/qris', [PropertyController::class, 'deleteQris']);
 
-        Route::get('/rooms', [RoomController::class, 'index']);
-        Route::get('/rooms/{room}', [RoomController::class, 'show']);
+        Route::get('/rooms', [RoomController::class, 'index']);     
         Route::post('/rooms', [RoomController::class, 'store']);
+        Route::put('/rooms/{room}', [RoomController::class, 'update']);
         Route::patch('/rooms/{room}/status', [RoomController::class, 'updateStatus']);
+        Route::get('/rooms/{room}', [RoomController::class, 'show']);
 
         Route::get('/tenants', [TenantController::class, 'index']);
         Route::post('/tenants', [TenantController::class, 'store']);

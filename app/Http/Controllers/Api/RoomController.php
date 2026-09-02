@@ -49,6 +49,18 @@ class RoomController extends Controller
         return response()->json($room, 201);
     }
 
+    public function update(Request $request, Room $room)
+    {
+        $data = $request->validate([
+            'price' => 'sometimes|numeric|min:0',
+            'description' => 'nullable|string',
+        ]);
+
+        $room->update($data);
+
+        return response()->json($room->load('roomType', 'activeContract.tenant.user'));
+    }
+
     public function updateStatus(Request $request, Room $room)
     {
         $data = $request->validate([
