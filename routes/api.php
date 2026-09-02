@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('/properties/{property}/qris', [PropertyController::class, 'deleteQris']);
 
         Route::get('/rooms', [RoomController::class, 'index']);
+        Route::get('/rooms/{room}', [RoomController::class, 'show']);
         Route::post('/rooms', [RoomController::class, 'store']);
         Route::patch('/rooms/{room}/status', [RoomController::class, 'updateStatus']);
 

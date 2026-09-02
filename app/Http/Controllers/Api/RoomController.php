@@ -57,4 +57,11 @@ class RoomController extends Controller
 
         return response()->json($room->tap(fn ($r) => $r->update($data)));
     }
+
+    public function show(Request $request, Room $room)
+    {
+        return response()->json(
+            $room->load('roomType', 'activeContract.tenant.user')
+        );
+    }
 }
