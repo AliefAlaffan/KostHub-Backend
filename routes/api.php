@@ -40,6 +40,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/tenants', [TenantController::class, 'index']);
         Route::post('/tenants', [TenantController::class, 'store']);
         Route::get('/tenants/{tenant}', [TenantController::class, 'show']);
+        Route::put('/tenants/{tenant}', [TenantController::class, 'update']);
+        Route::delete('/tenants/{tenant}', [TenantController::class, 'destroy']);
         Route::post('/tenants/{tenant}/documents', [TenantController::class, 'uploadDocuments']);
         Route::delete('/tenants/{tenant}/documents/{document}', [TenantController::class, 'deleteDocument']);
 

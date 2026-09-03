@@ -97,4 +97,25 @@ class TenantController extends Controller
 
         return response()->json(['message' => 'Dokumen dihapus.']);
     }
+
+    public function destroy(Request $request, Tenant $tenant)
+    {
+        $hasActiveContract = $tenant->contracts()
+            ->whereIn('status', ['active', 'ending_soon'])
+            ->exists();
+
+        if ($hasActiveContract) {
+            return response()->json([
+                'message' => 'Penghuni ini masih memiliki kontrak aktif. Proses check-out terlebih dahulu di halaman Kontrak sebelum menghapus.',
+            ], 422);
+        }
+
+        if ($tenant->user) {
+            $tenant->user->update(['status' => 'inactive']);
+        }
+
+        $tenant->delete();
+
+        return response()->json(['message' => 'Penghuni berhasil dihapus.']);
+    }
 }
