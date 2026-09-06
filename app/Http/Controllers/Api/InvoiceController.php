@@ -12,9 +12,17 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            Invoice::with('contract.tenant.user', 'contract.room', 'items')->latest()->get()
-        );
+        $user = $request->user();
+        $query = Invoice::with('contract.tenant.user', 'contract.room', 'items', 'payments');
+
+        if ($user->isTenant()) {
+            $query->whereHas('contract.tenant', fn ($q) => $q->where('user_id', $user->id));
+        } else {
+            $propertyIds = $user->accessiblePropertyIds();
+            $query->whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds));
+        }
+
+        return response()->json($query->latest()->get());
     }
 
     public function store(Request $request, InvoiceGenerationService $service)
