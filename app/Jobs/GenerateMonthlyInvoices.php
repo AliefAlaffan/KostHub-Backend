@@ -16,12 +16,16 @@ class GenerateMonthlyInvoices implements ShouldQueue
 
     public function handle(InvoiceGenerationService $service): void
     {
-        $period = now()->format('Y-m');
-
         Contract::whereIn('status', ['active', 'ending_soon'])
-            ->chunkById(100, function ($contracts) use ($service, $period) {
+            ->chunkById(100, function ($contracts) use ($service) {
                 foreach ($contracts as $contract) {
-                    $service->generateForContract($contract, $period);
+                    $invoice = $service->generateNextCycleIfDue($contract);
+
+                    if ($invoice) {
+                        $invoice->contract->tenant->user->notify(
+                            new \App\Notifications\InvoiceCreated($invoice)
+                        );
+                    }
                 }
             });
     }

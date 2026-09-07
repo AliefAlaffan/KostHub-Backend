@@ -29,14 +29,15 @@ class InvoiceController extends Controller
     {
         $data = $request->validate([
             'contract_id' => 'required|exists:contracts,id',
-            'period' => 'required|date_format:Y-m',
         ]);
 
         $contract = Contract::findOrFail($data['contract_id']);
-        $invoice = $service->generateForContract($contract, $data['period']);
+        $invoice = $service->generateNextCycleIfDue($contract);
 
         if (!$invoice) {
-            return response()->json(['message' => 'Kontrak tidak aktif pada periode ini.'], 422);
+            return response()->json([
+                'message' => 'Belum waktunya generate siklus tagihan berikutnya untuk kontrak ini, atau kontrak sudah berakhir.',
+            ], 422);
         }
 
         return response()->json($invoice->load('items'), 201);
