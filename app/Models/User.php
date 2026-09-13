@@ -13,7 +13,7 @@ class User extends Authenticatable
     use HasApiTokens, HasRoles, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'role', 'avatar', 'status', 'created_by',
+        'name', 'email', 'phone', 'password', 'role', 'avatar', 'status', 'created_by', 'has_all_properties_access',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -23,6 +23,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'has_all_properties_access' => 'boolean',
         ];
     }
 
@@ -39,12 +40,19 @@ class User extends Authenticatable
 
     public function isAdmin(): bool { return $this->role === 'admin'; }
     public function isStaff(): bool { return $this->role === 'staff'; }
-    public function isTenant(): bool { return $this->role === 'tenant'; }
+    public function isTenant(): bool { return $this->role === 'customer'; }
 
     public function accessiblePropertyIds(): array
     {
         if ($this->isAdmin()) return $this->propertiesOwned()->pluck('id')->toArray();
-        if ($this->isStaff()) return $this->assignedProperties()->pluck('properties.id')->toArray();
+
+        if ($this->isStaff()) {
+            if ($this->has_all_properties_access) {
+                return \App\Models\Property::pluck('id')->toArray();
+            }
+            return $this->assignedProperties()->pluck('properties.id')->toArray();
+        }
+
         return [];
     }
 

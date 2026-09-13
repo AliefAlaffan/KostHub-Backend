@@ -80,7 +80,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/users/staff', [UserManagementController::class, 'storeStaff']);
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword']);
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus']);
-
+        Route::patch('/users/{user}/property-access', [UserManagementController::class, 'updatePropertyAccess']);
         Route::get('/properties/{property}/reviews', [ReviewController::class, 'index']);
         Route::post('/properties/{property}/reviews', [ReviewController::class, 'store']);
         Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);

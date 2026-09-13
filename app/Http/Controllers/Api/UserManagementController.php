@@ -77,4 +77,24 @@ class UserManagementController extends Controller
 
         return response()->json($user);
     }
+
+    public function updatePropertyAccess(Request $request, User $user)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($user->isStaff(), 422, 'Fitur ini cuma buat akun staff.');
+
+        $data = $request->validate([
+            'has_all_properties_access' => 'required|boolean',
+            'property_ids' => 'array',
+            'property_ids.*' => 'exists:properties,id',
+        ]);
+
+        $user->update(['has_all_properties_access' => $data['has_all_properties_access']]);
+
+        if (! $data['has_all_properties_access']) {
+            $user->assignedProperties()->sync($data['property_ids'] ?? []);
+        }
+
+        return response()->json($user->fresh('assignedProperties'));
+    }
 }

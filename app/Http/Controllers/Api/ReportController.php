@@ -17,9 +17,11 @@ class ReportController extends Controller
 {
     public function occupancy(Request $request)
     {
-        $total = Room::count();
-        $occupied = Room::where('status', 'occupied')->count();
-        $available = Room::where('status', 'available')->count();
+        $propertyIds = $this->scopedPropertyIds($request);
+
+        $total = Room::whereIn('property_id', $propertyIds)->count();
+        $occupied = Room::whereIn('property_id', $propertyIds)->where('status', 'occupied')->count();
+        $available = Room::whereIn('property_id', $propertyIds)->where('status', 'available')->count();
 
         return response()->json([
             'total_rooms' => $total,
@@ -31,10 +33,15 @@ class ReportController extends Controller
 
     public function revenue(Request $request)
     {
-        $total = Invoice::where('status', 'paid')->sum('total_amount');
+        $propertyIds = $this->scopedPropertyIds($request);
 
-        $monthly = Invoice::where('status', 'paid')
-            ->selectRaw('period, SUM(total_amount) as total')
+        $total = Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->where('status', 'paid')
+            ->sum('total_amount');
+
+        $monthly = Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->where('status', 'paid')
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as period, SUM(total_amount) as total")
             ->groupBy('period')
             ->orderBy('period')
             ->get();
@@ -44,7 +51,10 @@ class ReportController extends Controller
 
     public function outstandingInvoices(Request $request)
     {
-        $invoices = Invoice::whereIn('status', ['unpaid', 'partial', 'overdue'])
+        $propertyIds = $this->scopedPropertyIds($request);
+
+        $invoices = Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
+            ->whereIn('status', ['unpaid', 'partial', 'overdue'])
             ->with('contract.tenant.user', 'contract.room')
             ->get();
 
@@ -57,7 +67,9 @@ class ReportController extends Controller
 
     public function expenses(Request $request)
     {
-        $expenses = Expense::all();
+        $propertyIds = $this->scopedPropertyIds($request);
+
+        $expenses = Expense::whereIn('property_id', $propertyIds)->get();
 
         return response()->json([
             'total_expenses' => $expenses->sum('amount'),
@@ -78,7 +90,7 @@ class ReportController extends Controller
 
         $monthlyRevenue = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
             ->where('status', 'paid')
-            ->selectRaw('period, SUM(total_amount) as total')
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as period, SUM(total_amount) as total")
             ->groupBy('period')
             ->orderBy('period')
             ->get();

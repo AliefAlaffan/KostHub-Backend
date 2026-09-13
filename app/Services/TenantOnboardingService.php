@@ -36,7 +36,7 @@ class TenantOnboardingService
                 'email' => $email,
                 'phone' => $data['phone'] ?? null,
                 'password' => $plainPassword,
-                'role' => 'tenant',
+                'role' => 'customer',
                 'status' => 'active',
                 'created_by' => $createdBy->id,
             ]);
