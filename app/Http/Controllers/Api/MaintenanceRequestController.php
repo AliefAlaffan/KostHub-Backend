@@ -10,9 +10,17 @@ class MaintenanceRequestController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            MaintenanceRequest::with('tenant.user', 'room.property', 'assignee')->latest()->get()
-        );
+        $user = $request->user();
+        $query = MaintenanceRequest::with('tenant.user', 'room.property', 'assignee');
+
+        if ($user->isTenant()) {
+            $query->whereHas('tenant', fn ($q) => $q->where('user_id', $user->id));
+        } else {
+            $propertyIds = $user->accessiblePropertyIds();
+            $query->whereHas('room', fn ($q) => $q->whereIn('property_id', $propertyIds));
+        }
+
+        return response()->json($query->latest()->get());
     }
 
     /** Hanya tenant yang bisa mengajukan komplain */
@@ -42,6 +50,8 @@ class MaintenanceRequestController extends Controller
 
     public function updateStatus(Request $request, MaintenanceRequest $maintenanceRequest)
     {
+        $this->authorizeStaffAccess($request, $maintenanceRequest);
+
         $data = $request->validate([
             'status' => 'required|in:new,in_progress,done,closed',
             'repair_cost' => 'nullable|numeric|min:0',
@@ -66,8 +76,20 @@ class MaintenanceRequestController extends Controller
 
     public function assign(Request $request, MaintenanceRequest $maintenanceRequest)
     {
+        $this->authorizeStaffAccess($request, $maintenanceRequest);
+
         $data = $request->validate(['assigned_to' => 'required|exists:users,id']);
         $maintenanceRequest->update(['assigned_to' => $data['assigned_to']]);
         return response()->json($maintenanceRequest);
+    }
+
+    /** Cuma admin/staff yang property-nya mencakup kamar dari komplain ini. */
+    private function authorizeStaffAccess(Request $request, MaintenanceRequest $maintenanceRequest): void
+    {
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isStaff(), 403);
+
+        $propertyIds = $user->accessiblePropertyIds();
+        abort_unless(in_array($maintenanceRequest->room->property_id, $propertyIds), 403);
     }
 }

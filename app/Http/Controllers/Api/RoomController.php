@@ -32,6 +32,8 @@ class RoomController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        abort_unless(in_array($data['property_id'], $request->user()->accessiblePropertyIds()), 403);
+
         // Validasi nomor kamar duplikat per lantai (Design Guidelines - error spesifik)
         $exists = Room::where('property_id', $data['property_id'])
             ->where('floor', $data['floor'])
@@ -51,6 +53,8 @@ class RoomController extends Controller
 
     public function update(Request $request, Room $room)
     {
+        $this->authorizeRoomAccess($request, $room);
+
         $data = $request->validate([
             'price' => 'sometimes|numeric|min:0',
             'description' => 'nullable|string',
@@ -63,6 +67,8 @@ class RoomController extends Controller
 
     public function updateStatus(Request $request, Room $room)
     {
+        $this->authorizeRoomAccess($request, $room);
+
         $data = $request->validate([
             'status' => 'required|in:available,maintenance,inactive',
         ]);
@@ -72,8 +78,15 @@ class RoomController extends Controller
 
     public function show(Request $request, Room $room)
     {
+        $this->authorizeRoomAccess($request, $room);
+
         return response()->json(
             $room->load('roomType', 'activeContract.tenant.user')
         );
+    }
+
+    private function authorizeRoomAccess(Request $request, Room $room): void
+    {
+        abort_unless(in_array($room->property_id, $request->user()->accessiblePropertyIds()), 403);
     }
 }

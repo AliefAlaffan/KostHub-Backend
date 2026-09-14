@@ -11,13 +11,23 @@ class ContractController extends Controller
 {
     public function index(Request $request)
     {
-        return response()->json(
-            Contract::with('tenant.user', 'room.property')->latest()->get()
-        );
+        $user = $request->user();
+        $query = Contract::with('tenant.user', 'room.property');
+
+        if ($user->isTenant()) {
+            $query->whereHas('tenant', fn ($q) => $q->where('user_id', $user->id));
+        } else {
+            $propertyIds = $user->accessiblePropertyIds();
+            $query->whereHas('room', fn ($q) => $q->whereIn('property_id', $propertyIds));
+        }
+
+        return response()->json($query->latest()->get());
     }
 
     public function show(Request $request, Contract $contract)
     {
+        $this->authorizeContractAccess($request, $contract);
+
         return response()->json($contract->load('tenant.user', 'room.property', 'invoices'));
     }
 
@@ -27,6 +37,8 @@ class ContractController extends Controller
      */
     public function renew(Request $request, Contract $contract)
     {
+        $this->authorizeStaffAccess($request, $contract);
+
         $data = $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -60,6 +72,8 @@ class ContractController extends Controller
      */
     public function checkout(Request $request, Contract $contract)
     {
+        $this->authorizeStaffAccess($request, $contract);
+
         $data = $request->validate([
             'checkout_date' => 'required|date',
             'room_condition_notes' => 'nullable|string',
@@ -75,5 +89,29 @@ class ContractController extends Controller
         });
 
         return response()->json($contract->fresh(['room']));
+    }
+
+    /** Boleh lihat kalau: kontrak miliknya sendiri, atau admin/staff yang property-nya cocok. */
+    private function authorizeContractAccess(Request $request, Contract $contract): void
+    {
+        $user = $request->user();
+
+        if ($user->isTenant()) {
+            abort_unless($contract->tenant->user_id === $user->id, 403);
+            return;
+        }
+
+        $propertyIds = $user->accessiblePropertyIds();
+        abort_unless(in_array($contract->room->property_id, $propertyIds), 403);
+    }
+
+    /** Renew/checkout cuma boleh admin/staff yang property-nya cocok, bukan customer. */
+    private function authorizeStaffAccess(Request $request, Contract $contract): void
+    {
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isStaff(), 403);
+
+        $propertyIds = $user->accessiblePropertyIds();
+        abort_unless(in_array($contract->room->property_id, $propertyIds), 403);
     }
 }

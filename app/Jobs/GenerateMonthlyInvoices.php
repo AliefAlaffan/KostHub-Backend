@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class GenerateMonthlyInvoices implements ShouldQueue
 {
@@ -22,9 +23,18 @@ class GenerateMonthlyInvoices implements ShouldQueue
                     $invoice = $service->generateNextCycleIfDue($contract);
 
                     if ($invoice) {
-                        $invoice->contract->tenant->user->notify(
-                            new \App\Notifications\InvoiceCreated($invoice)
-                        );
+                        try {
+                            $invoice->contract->tenant->user->notify(
+                                new \App\Notifications\InvoiceCreated($invoice)
+                            );
+                        } catch (\Throwable $e) {
+                            // Invoice-nya TETAP kebuat walau notifikasi gagal.
+                            // Gagal kirim notifikasi gak boleh nge-block kontrak lain di batch ini.
+                            Log::error('Gagal mengirim notifikasi invoice: '.$e->getMessage(), [
+                                'invoice_id' => $invoice->id,
+                                'contract_id' => $contract->id,
+                            ]);
+                        }
                     }
                 }
             });

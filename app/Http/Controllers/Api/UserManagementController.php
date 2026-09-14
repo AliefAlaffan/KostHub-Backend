@@ -16,8 +16,16 @@ class UserManagementController extends Controller
         return response()->json(
             User::with('assignedProperties')
                 ->orderBy('role')->orderBy('name')
-                ->get(['id', 'name', 'email', 'phone', 'role', 'status', 'created_at'])
+                ->get(['id', 'name', 'email', 'phone', 'role', 'status', 'has_all_properties_access', 'created_at'])
         );
+    }
+
+    /** BARU: sebelumnya gak ada, dibutuhkan buat halaman Detail User. */
+    public function show(Request $request, User $user)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        return response()->json($user->load('assignedProperties'));
     }
 
     /** Admin membuat akun Staff baru */
@@ -70,7 +78,6 @@ class UserManagementController extends Controller
     {
         abort_unless($request->user()->isAdmin(), 403);
 
-        // Admin tidak boleh menonaktifkan akunnya sendiri
         abort_if($user->id === $request->user()->id, 422, 'Tidak bisa menonaktifkan akun sendiri.');
 
         $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
@@ -78,6 +85,7 @@ class UserManagementController extends Controller
         return response()->json($user);
     }
 
+    /** Dari Langkah 3.5 — nyalain/matiin akses semua property buat staff */
     public function updatePropertyAccess(Request $request, User $user)
     {
         abort_unless($request->user()->isAdmin(), 403);

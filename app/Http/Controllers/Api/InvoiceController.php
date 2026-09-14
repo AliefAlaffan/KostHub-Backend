@@ -27,11 +27,18 @@ class InvoiceController extends Controller
 
     public function store(Request $request, InvoiceGenerationService $service)
     {
+        $user = $request->user();
+        abort_unless($user->isAdmin() || $user->isStaff(), 403, 'Hanya admin/staff yang bisa generate invoice.');
+
         $data = $request->validate([
             'contract_id' => 'required|exists:contracts,id',
         ]);
 
         $contract = Contract::findOrFail($data['contract_id']);
+
+        $propertyIds = $user->accessiblePropertyIds();
+        abort_unless(in_array($contract->room->property_id, $propertyIds), 403);
+
         $invoice = $service->generateNextCycleIfDue($contract);
 
         if (!$invoice) {
@@ -45,6 +52,15 @@ class InvoiceController extends Controller
 
     public function show(Request $request, Invoice $invoice)
     {
+        $user = $request->user();
+
+        if ($user->isTenant()) {
+            abort_unless($invoice->contract->tenant->user_id === $user->id, 403);
+        } else {
+            $propertyIds = $user->accessiblePropertyIds();
+            abort_unless(in_array($invoice->contract->room->property_id, $propertyIds), 403);
+        }
+
         return response()->json(
             $invoice->load('items', 'payments', 'contract.tenant.user', 'contract.room.property')
         );
