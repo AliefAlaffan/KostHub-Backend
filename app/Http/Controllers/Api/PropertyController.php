@@ -11,7 +11,11 @@ class PropertyController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Property::query();
+        $query = Property::query()->withCount([
+            'rooms',
+            'rooms as occupied_rooms_count' => fn ($q) => $q->where('status', 'occupied'),
+            'rooms as available_rooms_count' => fn ($q) => $q->where('status', 'available'),
+        ]);
 
         if ($user->isAdmin()) {
             $query->where('admin_id', $user->id);
@@ -32,6 +36,11 @@ class PropertyController extends Controller
             'city' => 'required|string|max:100',
             'type' => 'required|in:putra,putri,campur',
             'description' => 'nullable|string',
+            'facilities' => 'nullable|array',
+            'facilities.*' => 'string',
+            'bank_name' => 'nullable|string|max:100',
+            'account_number' => 'nullable|string|max:100',
+            'account_holder' => 'nullable|string',
         ]);
 
         $property = Property::create([
@@ -46,7 +55,9 @@ class PropertyController extends Controller
     public function show(Request $request, Property $property)
     {
         $this->authorize('view', $property);
-        return response()->json($property->load('roomTypes', 'rooms'));
+        return response()->json(
+            $property->load('roomTypes', 'rooms.activeContract.tenant.user')
+        );
     }
 
     public function update(Request $request, Property $property)
@@ -59,10 +70,45 @@ class PropertyController extends Controller
             'city' => 'sometimes|string|max:100',
             'type' => 'sometimes|in:putra,putri,campur',
             'description' => 'nullable|string',
+            'facilities' => 'nullable|array',
+            'facilities.*' => 'string',
+            'bank_name' => 'nullable|string|max:100',
+            'account_number' => 'nullable|string|max:100',
+            'account_holder' => 'nullable|string',
         ]);
 
         $property->update($data);
         return response()->json($property);
+    }
+
+    public function uploadPhoto(Request $request, Property $property)
+    {
+        $this->authorize('update', $property);
+
+        $request->validate([
+            'photo' => 'required|image|max:5120',
+        ]);
+
+        if ($property->photo) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($property->photo);
+        }
+
+        $path = $request->file('photo')->store("properties/{$property->id}/photo", 'public');
+        $property->update(['photo' => $path]);
+
+        return response()->json($property);
+    }
+
+    public function deletePhoto(Request $request, Property $property)
+    {
+        $this->authorize('update', $property);
+
+        if ($property->photo) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($property->photo);
+            $property->update(['photo' => null]);
+        }
+
+        return response()->json(['message' => 'Foto dihapus.']);
     }
 
     public function destroy(Request $request, Property $property)

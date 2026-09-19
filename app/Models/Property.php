@@ -10,8 +10,8 @@ class Property extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'admin_id', 'name', 'address', 'city', 'type', 'description',
-        'facilities', 'bank_account', 'qris_image', 'status',
+        'admin_id', 'name', 'address', 'city', 'type', 'description', 'photo',
+        'facilities', 'bank_account', 'bank_name', 'account_number', 'account_holder', 'qris_image', 'status',
     ];
 
     protected function casts(): array

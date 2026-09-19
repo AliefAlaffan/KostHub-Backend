@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\ReviewController;
-use App\Http\Controllers\Api\NotificationController;
 
 Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -31,6 +30,8 @@ Route::prefix('v1')->group(function () {
         Route::delete('/properties/{property}', [PropertyController::class, 'destroy']);
         Route::post('/properties/{property}/qris', [PropertyController::class, 'uploadQris']);
         Route::delete('/properties/{property}/qris', [PropertyController::class, 'deleteQris']);
+        Route::post('/properties/{property}/photo', [PropertyController::class, 'uploadPhoto']);
+        Route::delete('/properties/{property}/photo', [PropertyController::class, 'deletePhoto']);
 
         Route::get('/rooms', [RoomController::class, 'index']);     
         Route::post('/rooms', [RoomController::class, 'store']);
@@ -66,9 +67,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/announcements', [AnnouncementController::class, 'index']);
         Route::post('/announcements', [AnnouncementController::class, 'store']);
-        Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
-        Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update']);
-        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
 
         Route::prefix('reports')->group(function () {
             Route::get('/occupancy', [ReportController::class, 'occupancy']);
@@ -80,16 +78,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/export/pdf', [ReportController::class, 'exportPdf']);
         });
 
-        Route::get('/notifications', [NotificationController::class, 'index']);
-        Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
-        Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
-
         Route::get('/users', [UserManagementController::class, 'index']);
-        Route::get('/users/{user}', [UserManagementController::class, 'show']);
         Route::post('/users/staff', [UserManagementController::class, 'storeStaff']);
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword']);
         Route::patch('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus']);
-        Route::patch('/users/{user}/property-access', [UserManagementController::class, 'updatePropertyAccess']);
+
         Route::get('/properties/{property}/reviews', [ReviewController::class, 'index']);
         Route::post('/properties/{property}/reviews', [ReviewController::class, 'store']);
         Route::post('/reviews/{review}/reply', [ReviewController::class, 'reply']);

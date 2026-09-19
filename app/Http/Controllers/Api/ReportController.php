@@ -41,9 +41,9 @@ class ReportController extends Controller
 
         $monthly = Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
             ->where('status', 'paid')
-            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as period, SUM(total_amount) as total")
-            ->groupBy('period')
-            ->orderBy('period')
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as month_label, SUM(total_amount) as total")
+            ->groupBy('month_label')
+            ->orderBy('month_label')
             ->get();
 
         return response()->json(['total_revenue' => $total, 'monthly' => $monthly]);
@@ -90,9 +90,9 @@ class ReportController extends Controller
 
         $monthlyRevenue = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
             ->where('status', 'paid')
-            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as period, SUM(total_amount) as total")
-            ->groupBy('period')
-            ->orderBy('period')
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') as month_label, SUM(total_amount) as total")
+            ->groupBy('month_label')
+            ->orderBy('month_label')
             ->get();
 
         $outstandingInvoices = \App\Models\Invoice::whereHas('contract.room', fn ($q) => $q->whereIn('property_id', $propertyIds))
